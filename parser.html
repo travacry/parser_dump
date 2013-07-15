@@ -1,0 +1,198 @@
+<html>
+<head>
+	<title>Parser for dumps: Alex K.</title>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript">
+	function loadPage(){
+		initBtns();
+	}
+	
+	//базовый парсер - разбивает текст на вопрос-ответ по кол-во ответов
+	function base_parser_answer(){
+		//вход - текст для парсинга
+		var content = $("textarea##text_dump").val();
+/*
+		var reg_dump_answers_6 = /((Answer:[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)))/;
+		var reg_dump_answers_5 = /((Answer:[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_4 = /((Answer:[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_3 = /((Answer:[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_2 = /((Answer:[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_1 = /((Answer:[\ ]+([A-Z])))/;
+*/
+		var reg_dump_answers_6 = /((Answer(?:(\:)|(\ )?)[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)))/;
+		var reg_dump_answers_5 = /((Answer(?:(\:)|(\ )?)[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_4 = /((Answer(?:(\:)|(\ )?)[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_3 = /((Answer(?:(\:)|(\ )?)[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_2 = /((Answer(?:(\:)|(\ )?)[\ ]+([A-Z])(?:[ ]?)+(?:[.,])(?:[ ]?)+([A-Z])))/;
+		var reg_dump_answers_1 = /((Answer(?:(\:)|(\ )?)[\ ]+([A-Z])))/;
+		
+		//var reg_begin = /QUESTION/;
+		var reg_begin = /(([0-9]{2})|([0-9]{1}))[\.]{1}/; //58. , 1.
+		var out_strs = new Array();
+		var f_begin = false;
+		
+		var found_begin = null;
+		var found_end, test = null;
+		var next = 0;
+		
+		
+		var arr_str = content.replace('\r','').split('\n');
+		for(var i = 0; i < arr_str.length; ++i){
+		
+			found_begin = arr_str[i].match(reg_begin);
+			if (found_begin != null && !f_begin) {					
+				f_begin = true;
+				//console.log('t');
+			}
+			
+			//если начало вопроса найдено, пишем его
+			if (f_begin){					
+				out_strs[next++] = arr_str[i];	
+			}
+			
+			found_end = arr_str[i].match(reg_dump_answers_1);
+			//console.log(found_end);
+			//если конец вопроса найден, сливаем его в нужный textarea
+			if (found_end != null && f_begin) {
+				f_begin = false;
+				next = 0;
+			
+				//6 ответов 
+				if (test = arr_str[i].match(reg_dump_answers_6)) 	   { var id = 6; for (item in out_strs) out_arr_to_ans(id, out_strs[item]); terminate(id); }
+				//5 ответов 
+				else if (test = arr_str[i].match(reg_dump_answers_5))  { var id = 5; for (item in out_strs) out_arr_to_ans(id, out_strs[item]); terminate(id); }
+				//4 ответа
+				else if (test = arr_str[i].match(reg_dump_answers_4))  { var id = 4; for (item in out_strs) out_arr_to_ans(id, out_strs[item]); terminate(id); }
+				//3 ответа
+				else if (test = arr_str[i].match(reg_dump_answers_3))  { var id = 3; for (item in out_strs) out_arr_to_ans(id, out_strs[item]); terminate(id); }
+				//2 ответа
+				else if (test = arr_str[i].match(reg_dump_answers_2))  { var id = 2; for (item in out_strs) out_arr_to_ans(id, out_strs[item]); terminate(id); }
+				//1 ответ
+				else if (test = arr_str[i].match(reg_dump_answers_1))  { var id = 1; for (item in out_strs) out_arr_to_ans(id, out_strs[item]); terminate(id); };
+				
+				for (ii in out_strs) out_strs[ii] = '';
+			}
+
+			//var found_end = arr_str[i].match(reg_dump_answers_1);
+			found_begin = null; found_end = null;
+		}
+		
+		function terminate(num_answer){
+			var str = '-----------------------------------------------------------------';
+			$("#out_answer_" + num_answer).val($("#out_answer_" + num_answer).val() + str);
+			$("#out_answer_" + num_answer).val($("#out_answer_" + num_answer).val() + '\r\n');
+		}
+	
+	}
+	
+	function out_arr_to_ans(num_answer, str, no_space){
+		no_space = typeof no_space !== 'undefined' ? no_space : false; //default value 
+		
+		$("#out_answer_" + num_answer).val($("#out_answer_" + num_answer).val() + str);
+		if (!no_space)
+			$("#out_answer_" + num_answer).val($("#out_answer_" + num_answer).val() + '\r\n');
+	}
+
+	//дополнительный парсер удаляет : 1Z0-147 
+	//								: Actualtests.com - The Power of Knowing 
+	//чистит от \r\n
+	function delete_add_content(answer_id){
+		//все строки
+		var out_strs = new Array();
+		
+		var next = 0;
+
+		var content = $("#out_answer_" + answer_id).val();
+		var arr_str = content.replace('\r','').split('\n');
+		var reg_actualtests = /Actualtests.com - The Power of Knowing/;
+		var reg_1Z0147 = /1Z0-147/;
+		var reg_1z0147 = /1z0-147/;
+		var reg_nsnum = /(^- [0-9]+$)/;
+		var reg_page = /^([0-9]+\ )$/;
+		
+		var reg_certguaranteed = /CertGuaranteed. Study Hard and Pass Your Exam/;
+		
+		var found_reg1 = null;
+		var found_reg2 = null;
+		var found_reg3 = null;
+		var found_reg4 = null;
+		var found_reg5 = null;
+		var found_reg6 = null;
+		
+		var f_rn = false;
+		
+		for(var i = 0; i < arr_str.length; ++i){
+			
+			//удаление на фирменной регулярки
+			found_reg1 = arr_str[i].match(reg_actualtests);
+			found_reg2 = arr_str[i].match(reg_1Z0147);
+			found_reg3 = arr_str[i].match(reg_certguaranteed);
+			found_reg4 = arr_str[i].match(reg_1z0147);
+			found_reg5 = arr_str[i].match(reg_nsnum);
+			found_reg6 = arr_str[i].match(reg_page);
+			
+			if ((found_reg1 == null)
+				&&(found_reg2 == null)
+				&&(found_reg3 == null)
+				&&(found_reg4 == null)
+				&&(found_reg5 == null)
+				&&(found_reg6 == null)){
+				//удаление переводов строк
+				console.log((arr_str[i].charCodeAt().toString(16)));
+				console.log(arr_str[i], i, console.log((arr_str[i].charCodeAt().toString(16))));
+				if (arr_str[i] == '\r\n'
+					|| arr_str[i].charCodeAt().toString(16) == 'c' //в ворде новый лист
+					|| arr_str[i].charCodeAt().toString(16) == 'NaN') {
+					f_rn = true;
+				} 
+				else 
+				{
+					if (f_rn) { //лишнии переходы уходят (не все но время ...)
+						out_strs[next] = '\r\n';
+						f_rn = false;
+					}
+					out_strs[next] = arr_str[i];
+					next++;					
+				}
+			}			
+			
+			found_reg1 = null;
+			found_reg2 = null;
+			found_reg3 = null;
+			found_reg4 = null;
+			found_reg5 = null;
+			found_reg6 = null;
+		}		
+		
+		$("#out_answer_" + answer_id).val('');
+		for (ii in out_strs) 
+			out_arr_to_ans(answer_id, out_strs[ii], false);
+	}
+	
+	function initBtns(){
+		$("#parse").click(function(){	
+			base_parser_answer();
+			for (answer_id = 1; answer_id<=6; answer_id++)
+									delete_add_content(answer_id);
+		});
+	}	
+	</script>
+</head>
+<body onload="loadPage()">
+	<center>
+	<textarea id="text_dump" rows="20" cols="200" name="text"></textarea>
+	<center><input id="parse" type="submit" value="Парсить" style="width: 500px;"></center>
+	<p>Answer 1:</p>
+	<textarea id="out_answer_1" rows="9" cols="200" name="text"></textarea>
+	<p>Answer 2:</p>
+	<textarea id="out_answer_2" rows="9" cols="200" name="text"></textarea>
+	<p>Answer 3:</p>
+	<textarea id="out_answer_3" rows="9" cols="200" name="text"></textarea>
+	<p>Answer 4:</p>
+	<textarea id="out_answer_4" rows="9" cols="200" name="text"></textarea>
+	<p>Answer 5:</p>
+	<textarea id="out_answer_5" rows="9" cols="200" name="text"></textarea>
+	<p>Answer 6:</p>
+	<textarea id="out_answer_6" rows="9" cols="200" name="text"></textarea></center>
+</body>
+</html>
